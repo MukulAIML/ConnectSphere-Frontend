@@ -1,0 +1,22 @@
+<div class="feed-container">
+  <app-create-post (postCreated)="onPostCreated($event)"></app-create-post>
+
+  @if (loading) {
+    <div class="status">
+      <span class="spinner"></span>
+      <p>Loading your feed...</p>
+    </div>
+  } @else {
+    <div class="posts-list">
+      @for (post of posts; track post.postId) {
+        <app-post-card [post]="post"></app-post-card>
+      }
+      @if (posts.length === 0) {
+        <div class="empty-state card">
+          <h3>No posts yet</h3>
+          <p>Follow some users to see their posts here!</p>
+        </div>
+      }
+    </div>
+  }
+</div>

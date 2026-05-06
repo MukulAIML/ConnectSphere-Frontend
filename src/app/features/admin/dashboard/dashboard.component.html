@@ -1,0 +1,73 @@
+<div class="dashboard-container">
+  <div class="dashboard-header card">
+    <h1 class="page-title">Moderation Dashboard</h1>
+    <div class="tabs">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab === 'users'" 
+        (click)="setTab('users')"
+      >
+        Manage Users
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab === 'content'" 
+        (click)="setTab('content')"
+      >
+        Reported Content
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="status">
+      <span class="spinner"></span>
+      <p>Loading...</p>
+    </div>
+  } @else {
+    @if (activeTab === 'users') {
+      <div class="users-grid">
+        @for (user of users; track user.userId) {
+          <div class="card user-card" [class.suspended]="user.isSuspended">
+            <div class="user-info">
+              <h3>{{ user.username }}</h3>
+              <p>{{ user.email }}</p>
+              <span class="chip">{{ user.role }}</span>
+            </div>
+            <div class="user-actions">
+              @if (user.role !== 'ROLE_ADMIN') {
+                <button 
+                  class="btn-secondary" 
+                  [class.danger-btn]="!user.isSuspended"
+                  (click)="toggleSuspend(user)"
+                >
+                  {{ user.isSuspended ? 'Reactivate' : 'Suspend' }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="content-list">
+        @for (item of reportedComments; track item.commentId) {
+          <div class="card content-card">
+            <div class="content-body">
+              <p><strong>Reported Comment:</strong> {{ item.content }}</p>
+            </div>
+            <div class="content-actions">
+              <button class="btn-primary danger-btn" (click)="deleteComment(item.commentId)">
+                Delete Content
+              </button>
+            </div>
+          </div>
+        }
+        @if (reportedComments.length === 0) {
+          <div class="status">
+            <p>No reported content pending moderation.</p>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
