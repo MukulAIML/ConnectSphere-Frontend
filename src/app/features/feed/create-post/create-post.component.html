@@ -1,0 +1,69 @@
+<div class="card create-post-card">
+  <div class="create-post-body">
+    <div class="avatar-col">
+      <div class="post-avatar">✏️</div>
+    </div>
+    <div class="input-col">
+      <textarea
+        [(ngModel)]="content"
+        placeholder="What's on your mind? Share a thought…"
+        rows="3"
+        class="post-textarea"
+        (keydown.meta.enter)="onSubmit()"
+        (keydown.ctrl.enter)="onSubmit()"
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- Media previews -->
+  @if (filePreviews.length > 0) {
+    <div class="media-previews">
+      @for (preview of filePreviews; track preview.name; let i = $index) {
+        <div class="preview-item">
+          @if (preview.type === 'image' && preview.url) {
+            <img [src]="preview.url" [alt]="preview.name" class="preview-img" />
+          } @else {
+            <div class="preview-video">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              <span>{{ preview.name }}</span>
+            </div>
+          }
+          <button class="remove-preview" (click)="removeFile(i)" title="Remove">✕</button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Hidden file inputs -->
+  <input #photoInput type="file" accept="image/*" multiple (change)="onFileSelected($event, 'photo')" style="display:none" />
+  <input #videoInput type="file" accept="video/*" multiple (change)="onFileSelected($event, 'video')" style="display:none" />
+
+  @if (uploadError) {
+    <p class="upload-error">{{ uploadError }}</p>
+  }
+
+  <div class="create-post-footer">
+    <div class="media-btns">
+      <button class="media-btn" title="Add Photo" (click)="triggerPhotoInput()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Photo
+      </button>
+      <button class="media-btn" title="Add Video" (click)="triggerVideoInput()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        Video
+      </button>
+    </div>
+    <button
+      class="btn-primary post-btn"
+      [disabled]="(!content.trim() && selectedFiles.length === 0) || loading"
+      (click)="onSubmit()"
+    >
+      @if (loading) {
+        <span class="spinner"></span> Posting…
+      } @else {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Post
+      }
+    </button>
+  </div>
+</div>

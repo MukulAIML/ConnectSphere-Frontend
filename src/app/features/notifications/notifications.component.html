@@ -1,0 +1,45 @@
+<div class="notifications-container">
+  <div class="notifications-header card">
+    <h2>Notifications</h2>
+    <div class="header-actions">
+      @if (unreadCount > 0) {
+        <button class="btn-secondary mark-all-btn" (click)="markAllAsRead()">
+          Mark all as read ({{ unreadCount }})
+        </button>
+      }
+      @if (notifications.length > 0) {
+        <button class="btn-secondary clear-all-btn" [disabled]="clearingAll" (click)="clearAllNotifications()">
+          {{ clearingAll ? 'Clearing…' : 'Clear all' }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="status">
+      <span class="spinner"></span>
+      <p>Loading notifications…</p>
+    </div>
+  } @else if (notifications.length === 0) {
+    <div class="card empty-state">
+      <div class="empty-icon">🔔</div>
+      <h3>You're all caught up!</h3>
+      <p>No notifications at the moment.</p>
+    </div>
+  } @else {
+    <div class="notifications-list">
+      @for (notification of notifications; track notification.notificationId; let i = $index) {
+        <div class="card notification-card" [class.unread]="!notification.isRead" (click)="markAsRead(notification)">
+          <div class="notification-icon">{{ getNotificationIcon(notification.type) }}</div>
+          <div class="notification-body">
+            <p class="notification-message">{{ notification.message }}</p>
+            <span class="notification-time">{{ notification.createdAt | date:'MMM d, y · h:mm a' }}</span>
+          </div>
+          <button class="delete-notif-btn" (click)="deleteNotification(notification.notificationId, i); $event.stopPropagation()" title="Delete">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

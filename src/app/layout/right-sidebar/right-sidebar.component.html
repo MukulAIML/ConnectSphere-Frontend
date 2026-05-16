@@ -1,0 +1,62 @@
+<aside class="right-sidebar">
+  <div class="card suggestions-card">
+    <h3 class="card-title">Who to follow</h3>
+
+    @if (loading) {
+      <div class="suggestions-loading">
+        <span class="spinner"></span>
+      </div>
+    } @else if (suggestions.length === 0) {
+      <p class="no-suggestions">No suggestions right now.</p>
+    } @else {
+      <div class="user-list">
+        @for (suggestion of suggestions; track suggestion.userId) {
+          <div class="user-item">
+            <a [routerLink]="['/profile', suggestion.userId]" class="user-link">
+              <div class="avatar">{{ suggestion.username.charAt(0).toUpperCase() }}</div>
+              <div class="user-info">
+                <div class="username">{{ suggestion.displayName }}</div>
+                <div class="fullname">&#64;{{ suggestion.username }}</div>
+                @if (suggestion.hasMutualConnection) {
+                  <div class="mutual-chip">Mutual connection</div>
+                }
+              </div>
+            </a>
+            <button
+              class="follow-btn"
+              [class.followed]="suggestion.followed"
+              (click)="followUser(suggestion)"
+              [disabled]="suggestion.followed"
+            >
+              {{ suggestion.followed ? 'Following' : 'Follow' }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="card trending-card">
+    <h3 class="card-title">Trending Hashtags</h3>
+
+    @if (loadingTrending) {
+      <div class="suggestions-loading">
+        <span class="spinner"></span>
+      </div>
+    } @else if (trendingHashtags.length === 0) {
+      <p class="no-suggestions">No trending hashtags right now.</p>
+    } @else {
+      <div class="trending-list">
+        @for (hashtag of trendingHashtags; track hashtag.hashtagId) {
+          <a
+            class="trend-item"
+            [routerLink]="['/hashtag', hashtag.tag]"
+          >
+            <span class="trend-tag">#{{ hashtag.tag }}</span>
+            <span class="trend-count">{{ hashtag.postCount }}</span>
+          </a>
+        }
+      </div>
+    }
+  </div>
+</aside>

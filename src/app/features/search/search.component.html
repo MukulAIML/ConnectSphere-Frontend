@@ -1,0 +1,163 @@
+<div class="search-page">
+  <div class="search-hero card">
+    <h2 class="search-title">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Explore ConnectSphere
+    </h2>
+
+    <div class="mode-tabs">
+      <button class="mode-tab" [class.active]="mode === 'users'" (click)="setSearchMode('users')">People</button>
+      <button class="mode-tab" [class.active]="mode === 'posts'" (click)="setSearchMode('posts')">Posts</button>
+      <button class="mode-tab" [class.active]="mode === 'hashtags'" (click)="setSearchMode('hashtags')">Hashtags</button>
+    </div>
+
+    <div class="search-box">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        type="text"
+        class="search-input"
+        [value]="query"
+        [placeholder]="searchPlaceholder"
+        (input)="onSearch($event)"
+        autocomplete="off"
+      >
+      @if (loading) {
+        <span class="spinner search-spinner"></span>
+      }
+    </div>
+  </div>
+
+  <div class="search-layout">
+    <div class="results-area">
+      @if (!hasSearched) {
+        <div class="empty-hint card">
+          <div class="hint-icon">🔎</div>
+          @if (mode === 'users') {
+            <p>Search users by username or full name.</p>
+          } @else if (mode === 'posts') {
+            <p>Search posts by content keywords.</p>
+          } @else {
+            <p>Search hashtags or pick one from trending.</p>
+          }
+        </div>
+      } @else if (loading) {
+        <div class="skeleton-list">
+          @for (i of [1, 2, 3]; track i) {
+            <div class="card skeleton-card">
+              <div class="skeleton skeleton-avatar"></div>
+              <div class="skeleton-lines">
+                <div class="skeleton skeleton-line" style="width: 60%"></div>
+                <div class="skeleton skeleton-line" style="width: 40%"></div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (mode === 'users') {
+        @if (userResults.length === 0) {
+          <div class="empty-hint card">
+            <div class="hint-icon">😶</div>
+            <p>No users found for this query.</p>
+          </div>
+        } @else {
+          <div class="results-list">
+            @for (user of userResults; track user.userId) {
+              <div class="card user-result">
+                <div class="user-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+                <div class="user-details">
+                  <span class="user-display-name">{{ user.fullName || user.username }}</span>
+                  <span class="user-handle">&#64;{{ user.username }}</span>
+                </div>
+                <a [routerLink]="['/profile', user.userId]" class="btn-secondary view-btn">View</a>
+              </div>
+            }
+          </div>
+        }
+      } @else if (mode === 'posts') {
+        @if (postResults.length === 0) {
+          <div class="empty-hint card">
+            <div class="hint-icon">📝</div>
+            <p>No posts found for this query.</p>
+          </div>
+        } @else {
+          <div class="results-list">
+            @for (post of postResults; track post.postId) {
+              <div class="card post-result">
+                <div class="post-result-header">
+                  <span class="post-author">User {{ post.authorId }}</span>
+                  <span class="post-time">{{ post.createdAt | date:'MMM d, y · h:mm a' }}</span>
+                </div>
+                <p class="post-content">{{ post.content || 'Media post' }}</p>
+                @if (post.mediaUrls.length > 0) {
+                  <p class="post-media-note">{{ post.mediaUrls.length }} media attachment(s)</p>
+                }
+                <div class="post-stats-row">
+                  <span>{{ post.likesCount }} reactions</span>
+                  <span>{{ post.commentsCount }} comments</span>
+                  <span>{{ post.sharesCount }} shares</span>
+                </div>
+                @if (getPostHashtags(post.postId).length > 0) {
+                  <div class="hashtag-row">
+                    @for (hashtag of getPostHashtags(post.postId); track hashtag.hashtagId) {
+                      <button class="hashtag-chip" (click)="viewHashtagPosts(hashtag.tag)">#{{ hashtag.tag }}</button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      } @else {
+        @if (hashtagResults.length === 0) {
+          <div class="empty-hint card">
+            <div class="hint-icon">#️⃣</div>
+            <p>No hashtags found for this query.</p>
+          </div>
+        } @else {
+          <div class="results-list">
+            @for (hashtag of hashtagResults; track hashtag.hashtagId) {
+              <div class="card hashtag-result">
+                <div class="hashtag-main">
+                  <span class="hashtag-tag">#{{ hashtag.tag }}</span>
+                  <span class="hashtag-count">{{ hashtag.postCount }} posts</span>
+                </div>
+                <div class="hashtag-actions">
+                  <button class="btn-secondary small-btn" (click)="useHashtagAsQuery(hashtag.tag)">Search Tag</button>
+                  <button class="btn-primary small-btn" (click)="viewHashtagPosts(hashtag.tag)">View Posts</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    <aside class="trending-area">
+      <div class="card trending-card">
+        <h3 class="trending-title">Trending Hashtags</h3>
+        @if (loadingTrending) {
+          <div class="suggestions-loading">
+            <span class="spinner"></span>
+          </div>
+        } @else if (trendingHashtags.length === 0) {
+          <p class="no-suggestions">No trending hashtags right now.</p>
+        } @else {
+          <div class="trending-list">
+            @for (hashtag of trendingHashtags; track hashtag.hashtagId) {
+              <button class="trend-item" (click)="viewHashtagPosts(hashtag.tag)">
+                <span class="trend-tag">#{{ hashtag.tag }}</span>
+                <span class="trend-count">{{ hashtag.postCount }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      @if (activeHashtagTag && mode === 'posts') {
+        <div class="card tag-context">
+          <p>Showing posts for</p>
+          <strong>#{{ activeHashtagTag }}</strong>
+        </div>
+      }
+    </aside>
+  </div>
+</div>

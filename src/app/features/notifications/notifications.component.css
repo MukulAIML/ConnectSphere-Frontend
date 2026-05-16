@@ -1,0 +1,135 @@
+.notifications-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notifications-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.mark-all-btn {
+  font-size: 0.82rem;
+  padding: 0.4rem 1rem;
+}
+
+.clear-all-btn {
+  font-size: 0.82rem;
+  padding: 0.4rem 1rem;
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fda4af;
+}
+
+.clear-all-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+.empty-state h3 {
+  margin: 0 0 0.5rem;
+  color: var(--color-text);
+}
+
+.empty-state p {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.notification-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.notification-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.notification-card.unread {
+  border-left: 3px solid var(--color-primary, #7c3aed);
+  background: rgba(124, 58, 237, 0.04);
+}
+
+.notification-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-surface-elevated);
+}
+
+.notification-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-message {
+  font-size: 0.92rem;
+  color: var(--color-text);
+  margin: 0 0 0.25rem;
+  line-height: 1.45;
+}
+
+.notification-time {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.delete-notif-btn {
+  color: var(--color-text-muted);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.delete-notif-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}

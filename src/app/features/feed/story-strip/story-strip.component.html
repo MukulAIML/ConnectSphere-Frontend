@@ -1,0 +1,171 @@
+<section class="card story-strip">
+  <div class="story-strip-header">
+    <h3>Stories</h3>
+    <button class="create-story-link" (click)="openCreateStoryModal()">Create story</button>
+  </div>
+
+  <div class="story-scroll">
+    <button class="story-pill create-pill" (click)="openCreateStoryModal()">
+      <span class="story-ring create-ring">
+        <span class="story-plus">+</span>
+      </span>
+      <span class="story-name">Your Story</span>
+    </button>
+
+    @if (storiesLoading) {
+      @for (_ of [1, 2, 3, 4]; track $index) {
+        <div class="story-pill skeleton-pill">
+          <span class="story-ring skeleton"></span>
+          <span class="skeleton story-name-skeleton"></span>
+        </div>
+      }
+    } @else {
+      @for (group of storyGroups; track group.authorId) {
+        <button class="story-pill" [class.seen]="isGroupSeen(group)" (click)="openStoryGroup(group)">
+          <span class="story-ring" [class.seen]="isGroupSeen(group)">
+            <span class="story-avatar">{{ getUserInitial(group.authorId) }}</span>
+          </span>
+          <span class="story-name">{{ getStoryAuthorLabel(group.authorId) }}</span>
+        </button>
+      }
+
+      @if (storyGroups.length === 0 && !storiesError) {
+        <p class="story-empty">No active stories yet. Share your first one.</p>
+      }
+    }
+  </div>
+
+  @if (storiesError && !storiesLoading) {
+    <div class="story-error-row">
+      <p>Couldn&apos;t load stories right now.</p>
+      <button class="btn-ghost retry-btn" (click)="loadActiveStories()">Retry</button>
+    </div>
+  }
+</section>
+
+@if (showCreateModal) {
+  <div class="modal-backdrop" (click)="closeCreateStoryModal()">
+    <div class="card modal-card" (click)="preventModalClose($event)">
+      <div class="modal-header">
+        <h3>Create Story</h3>
+        <button class="close-btn" (click)="closeCreateStoryModal()" aria-label="Close">✕</button>
+      </div>
+
+      <input
+        #storyFileInput
+        type="file"
+        accept="image/*,video/mp4"
+        (change)="onStoryFileSelected($event)"
+        hidden
+      />
+
+      @if (!selectedStoryFile) {
+        <button class="pick-story-btn" (click)="triggerStoryFilePicker()">
+          Select photo or MP4 video
+        </button>
+      } @else {
+        <div class="story-preview-wrapper">
+          @if (selectedStoryFile.type.startsWith('video/')) {
+            <video class="story-preview" [src]="selectedStoryPreviewUrl" controls></video>
+          } @else {
+            <img class="story-preview" [src]="selectedStoryPreviewUrl" alt="Selected story preview" />
+          }
+          <button class="btn-ghost replace-btn" (click)="triggerStoryFilePicker()">Replace</button>
+        </div>
+      }
+
+      <textarea
+        [(ngModel)]="storyCaption"
+        rows="3"
+        placeholder="Add a caption (optional)"
+      ></textarea>
+
+      @if (createStoryError) {
+        <p class="error-text">{{ createStoryError }}</p>
+      }
+
+      <div class="modal-actions">
+        <button class="btn-ghost" (click)="closeCreateStoryModal()">Cancel</button>
+        <button
+          class="btn-primary"
+          [disabled]="!selectedStoryFile || creatingStory"
+          (click)="submitStory()"
+        >
+          @if (creatingStory) {
+            <span class="spinner"></span> Sharing...
+          } @else {
+            Share Story
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showViewer && currentStory; as activeStory) {
+  <div class="viewer-backdrop" (click)="closeStoryViewer()">
+    <div class="card viewer-card" (click)="preventModalClose($event)">
+      <div class="viewer-progress">
+        @for (story of viewerStories; track story.storyId; let i = $index) {
+          <span class="progress-segment" [class.completed]="i < viewerIndex" [class.active]="i === viewerIndex"></span>
+        }
+      </div>
+
+      <div class="viewer-header">
+        <div class="viewer-author">
+          <span class="viewer-avatar">{{ getUserInitial(activeStory.authorId) }}</span>
+          <div class="viewer-author-meta">
+            <strong>{{ getUserDisplayName(activeStory.authorId) }}</strong>
+            <span>{{ activeStory.createdAt | date:'MMM d, h:mm a' }}</span>
+          </div>
+        </div>
+        <div class="viewer-header-actions">
+          @if (canDeleteStory(activeStory)) {
+            <button class="danger-btn" [disabled]="deletingStory" (click)="deleteCurrentStory()">
+              @if (deletingStory) {
+                Deleting...
+              } @else {
+                Delete
+              }
+            </button>
+          }
+          <button class="close-btn" (click)="closeStoryViewer()" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <div class="viewer-media-wrapper">
+        @if (isStoryVideo(activeStory)) {
+          <video
+            class="viewer-media"
+            [src]="resolveStoryMediaUrl(activeStory.mediaUrl)"
+            controls
+            autoplay
+            muted
+            playsinline
+          ></video>
+        } @else {
+          <img
+            class="viewer-media"
+            [src]="resolveStoryMediaUrl(activeStory.mediaUrl)"
+            alt="Story content"
+          />
+        }
+      </div>
+
+      @if (activeStory.caption) {
+        <p class="viewer-caption">{{ activeStory.caption }}</p>
+      }
+
+      <div class="viewer-nav">
+        <button class="btn-secondary" [disabled]="viewerIndex === 0" (click)="showPreviousStory()">Previous</button>
+        <button class="btn-primary" (click)="showNextStory()">
+          @if (viewerIndex === viewerStories.length - 1) {
+            Close
+          } @else {
+            Next
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

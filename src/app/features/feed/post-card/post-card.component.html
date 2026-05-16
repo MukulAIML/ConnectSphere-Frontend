@@ -1,0 +1,278 @@
+@if (!isDeletedLocally) {
+  <article class="card post-card">
+    <!-- Post Header -->
+    <div class="post-header">
+      <div class="author-avatar">{{ getUserInitial(post.authorId) }}</div>
+      <div class="author-info">
+        <a class="author-name" [routerLink]="['/profile', post.authorId]">{{ getUserDisplayName(post.authorId) }}</a>
+        <span class="post-time">{{ post.createdAt | date:'MMM d, y · h:mm a' }}</span>
+      </div>
+      <div class="post-options-wrapper">
+        <button class="more-btn" title="Options" (click)="toggleOptionsMenu()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+
+        @if (showOptionsMenu) {
+          <div class="options-menu">
+            @if (isOwnPost) {
+              <button class="menu-item" (click)="startEditingPost()">Edit Post</button>
+              <div class="menu-group-title">Visibility</div>
+              @for (visibility of visibilities; track visibility) {
+                <button
+                  class="menu-item"
+                  [class.active]="post.visibility === visibility"
+                  [disabled]="updatingVisibility"
+                  (click)="changeVisibility(visibility)"
+                >
+                  {{ readableVisibility(visibility) | titlecase }}
+                </button>
+              }
+              <button class="menu-item danger" [disabled]="deletingPost" (click)="deletePost()">
+                {{ deletingPost ? 'Deleting...' : 'Delete Post' }}
+              </button>
+            } @else {
+              <button class="menu-item" (click)="reportPost()">Report Post</button>
+            }
+            <button class="menu-item" (click)="closeOptionsMenu()">Close</button>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (postActionMessage) {
+      <p class="action-status success">{{ postActionMessage }}</p>
+    }
+    @if (postActionError) {
+      <p class="action-status error">{{ postActionError }}</p>
+    }
+
+    <!-- Content -->
+    @if (editingPost) {
+      <div class="edit-post-panel">
+        <textarea
+          rows="4"
+          [(ngModel)]="editContent"
+          placeholder="Update your post..."
+          [disabled]="savingPost"
+        ></textarea>
+        <div class="edit-post-actions">
+          <button class="btn-secondary" (click)="cancelEditingPost()" [disabled]="savingPost">Cancel</button>
+          <button class="btn-primary" (click)="savePostEdits()" [disabled]="!editContent.trim() || savingPost">
+            {{ savingPost ? 'Saving...' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    } @else {
+      @if (post.content) {
+        <div class="post-content">
+          <p>{{ post.content }}</p>
+          @if (extractHashtags(post.content).length > 0) {
+            <div class="hashtag-row">
+              @for (tag of extractHashtags(post.content); track tag) {
+                <a class="hashtag-chip" [routerLink]="['/hashtag', tag]">#{{ tag }}</a>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- Media Gallery -->
+    @if (post.mediaUrls && post.mediaUrls.length > 0) {
+      <div class="post-media" [class.multi]="post.mediaUrls.length > 1">
+        @for (url of post.mediaUrls; track url) {
+          @if (isVideo(url)) {
+            <video class="media-item" controls preload="metadata">
+              <source [src]="resolveMediaUrl(url)" />
+            </video>
+          } @else {
+            <img class="media-item" [src]="resolveMediaUrl(url)" alt="Post media" loading="lazy" />
+          }
+        }
+      </div>
+    }
+
+    <!-- Stats Bar -->
+    @if (getTotalReactions() > 0 || post.commentsCount > 0) {
+      <div class="post-stats">
+        @if (getTotalReactions() > 0) {
+          <div class="stat-reactions">
+            <span class="reaction-bubbles">
+              @for (reactionType of getTopReactionTypes(); track reactionType) {
+                <span class="reaction-bubble">{{ getReactionEmoji(reactionType) }}</span>
+              }
+            </span>
+            <span>{{ getTotalReactions() }}</span>
+          </div>
+        }
+        @if (post.commentsCount > 0) {
+          <span class="stat-comments" (click)="toggleComments()">{{ post.commentsCount }} comments</span>
+        }
+      </div>
+    }
+
+    <!-- Action Bar -->
+    <div class="post-actions">
+      <!-- Reaction button with hover popover -->
+      <div class="reaction-wrapper"
+           (mouseenter)="showReactionsPicker = true"
+           (mouseleave)="showReactionsPicker = false">
+
+        @if (showReactionsPicker) {
+          <div class="reactions-popover">
+            @for (r of availableReactions; track r.type) {
+              <button class="emoji-pill"
+                      [class.selected]="post.userReactionType === r.type"
+                      (click)="handleReact(r.type)"
+                      [title]="r.type | titlecase">
+                {{ r.emoji }}
+              </button>
+            }
+          </div>
+        }
+
+        <button class="action-btn" [class.reacted]="post.userReactionType" (click)="handleReact('LIKE')">
+          @if (post.userReactionType) {
+            <span class="reaction-icon">{{ getReactionEmoji(post.userReactionType) }}</span>
+          } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+          }
+          <span>{{ post.userReactionType ? (post.userReactionType | titlecase) : 'Like' }}</span>
+        </button>
+      </div>
+
+      <button class="action-btn" (click)="toggleComments()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span>Comment</span>
+      </button>
+
+      <button class="action-btn" [disabled]="sharingPost" (click)="sharePost()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <span>{{ sharingPost ? 'Sharing...' : 'Share' }}</span>
+      </button>
+    </div>
+
+    <!-- Comment Section -->
+    @if (showComments) {
+      <div class="comments-section">
+        <!-- Comment Input -->
+        <div class="comment-input-row">
+          <input
+            type="text"
+            class="comment-input"
+            [(ngModel)]="newCommentText"
+            placeholder="Write a comment…"
+            (keydown.enter)="submitComment()"
+            [disabled]="submittingComment"
+          />
+          <button class="comment-send-btn" (click)="submitComment()" [disabled]="!newCommentText.trim() || submittingComment">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+
+        @if (loadingComments) {
+          <div class="comments-loading">Loading comments…</div>
+        } @else {
+          <div class="comments-list">
+            @for (comment of comments; track comment.commentId; let i = $index) {
+              <div class="comment-item">
+                <div class="comment-avatar">{{ getUserInitial(comment.authorId) }}</div>
+                <div class="comment-body">
+                  <div class="comment-header">
+                    <span class="comment-author">{{ getUserDisplayName(comment.authorId) }}</span>
+                    <span class="comment-time">{{ comment.createdAt | date:'MMM d, h:mm a' }}</span>
+                  </div>
+                  <p class="comment-text">{{ comment.content }}</p>
+                  <div class="comment-actions-row">
+                    <button
+                      class="comment-action-btn"
+                      [class.active]="comment.userReactionType"
+                      (click)="toggleCommentReaction(comment)"
+                    >
+                      @if (comment.userReactionType) {
+                        {{ getReactionEmoji(comment.userReactionType) }} {{ comment.userReactionType | titlecase }}
+                      } @else {
+                        Like
+                      }
+                      ({{ getCommentReactionTotal(comment) }})
+                    </button>
+                    <button class="comment-action-btn" (click)="toggleReplyComposer(comment.commentId)">Reply</button>
+                    <button class="comment-action-btn" (click)="reportComment(comment)">Report</button>
+                    <button class="comment-action-btn danger" (click)="deleteComment(comment.commentId, i)">Delete</button>
+                  </div>
+
+                  @if (replyComposerOpen[comment.commentId]) {
+                    <div class="reply-input-row">
+                      <input
+                        type="text"
+                        class="reply-input"
+                        [(ngModel)]="replyDrafts[comment.commentId]"
+                        placeholder="Write a reply…"
+                        (keydown.enter)="submitReply(comment)"
+                        [disabled]="submittingReply[comment.commentId]"
+                      />
+                      <button
+                        class="reply-send-btn"
+                        (click)="submitReply(comment)"
+                        [disabled]="!(replyDrafts[comment.commentId] || '').trim() || submittingReply[comment.commentId]"
+                      >
+                        Reply
+                      </button>
+                      <button
+                        class="reply-cancel-btn"
+                        (click)="closeReplyComposer(comment.commentId)"
+                        [disabled]="submittingReply[comment.commentId]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  }
+
+                  @if (loadingReplies[comment.commentId]) {
+                    <div class="replies-loading">Loading replies…</div>
+                  }
+
+                  @if (comment.replies && comment.replies.length > 0) {
+                    <div class="replies-list">
+                      @for (reply of comment.replies; track reply.commentId; let r = $index) {
+                        <div class="reply-item">
+                          <div class="comment-avatar reply-avatar">{{ getUserInitial(reply.authorId) }}</div>
+                          <div class="reply-body">
+                            <div class="comment-header">
+                              <span class="comment-author">{{ getUserDisplayName(reply.authorId) }}</span>
+                              <span class="comment-time">{{ reply.createdAt | date:'MMM d, h:mm a' }}</span>
+                            </div>
+                            <p class="comment-text">{{ reply.content }}</p>
+                            <div class="comment-actions-row">
+                              <button
+                                class="comment-action-btn"
+                                [class.active]="reply.userReactionType"
+                                (click)="toggleCommentReaction(reply)"
+                              >
+                                @if (reply.userReactionType) {
+                                  {{ getReactionEmoji(reply.userReactionType) }} {{ reply.userReactionType | titlecase }}
+                                } @else {
+                                  Like
+                                }
+                                ({{ getCommentReactionTotal(reply) }})
+                              </button>
+                              <button class="comment-action-btn" (click)="reportComment(reply)">Report</button>
+                              <button class="comment-action-btn danger" (click)="deleteReply(comment, reply.commentId, r)">Delete</button>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+            @if (comments.length === 0) {
+              <p class="no-comments">No comments yet. Be the first!</p>
+            }
+          </div>
+        }
+      </div>
+    }
+  </article>
+}

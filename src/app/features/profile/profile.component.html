@@ -1,0 +1,69 @@
+<div class="profile-container">
+  @if (user) {
+    <div class="card profile-header">
+      <div class="avatar large">{{ user.username ? user.username.charAt(0).toUpperCase() : 'U' }}</div>
+      <div class="profile-info">
+        <h1>{{ user.fullName || user.username }}</h1>
+        <p class="username">&#64;{{ user.username || 'user' }}</p>
+        <div class="profile-stats">
+          <div class="stat-item">
+            <span class="stat-value">{{ posts.length }}</span>
+            <span class="stat-label">Posts</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ followerCount }}</span>
+            <span class="stat-label">Followers</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ followingCount }}</span>
+            <span class="stat-label">Following</span>
+          </div>
+        </div>
+      </div>
+      <div class="profile-actions">
+        @if (isOwnProfile) {
+          <span class="chip">{{ user.role }}</span>
+        } @else {
+          <button 
+            class="follow-toggle-btn"
+            [class.following]="isFollowing"
+            (click)="toggleFollow()"
+            [disabled]="followLoading"
+          >
+            {{ isFollowing ? 'Unfollow' : 'Follow' }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- User Posts -->
+    <div class="profile-posts-section">
+      <h2 class="section-title">Posts</h2>
+      @if (loadingPosts) {
+        <div class="status">
+          <span class="spinner"></span>
+          <p>Loading posts…</p>
+        </div>
+      } @else if (posts.length === 0) {
+        <div class="card empty-state">
+          <h3>No posts yet</h3>
+          <p>{{ isOwnProfile ? 'Create your first post!' : 'This user hasn\'t posted yet.' }}</p>
+        </div>
+      } @else {
+        <div class="posts-list">
+          @for (post of posts; track post.postId) {
+            <app-post-card [post]="post"></app-post-card>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    @if (loadingProfile) {
+      <div class="status">Loading profile…</div>
+    } @else if (profileLoadError) {
+      <div class="status">{{ profileLoadError }}</div>
+    } @else {
+      <div class="status">Profile unavailable.</div>
+    }
+  }
+</div>

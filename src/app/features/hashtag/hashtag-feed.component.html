@@ -1,0 +1,32 @@
+<div class="hashtag-page">
+  <div class="card hashtag-header">
+    <div>
+      <p class="label">Hashtag Feed</p>
+      <h1>#{{ tag }}</h1>
+      <p class="subtitle">{{ posts.length }} post(s)</p>
+    </div>
+    <a class="btn-secondary" [routerLink]="['/search']">Back to Search</a>
+  </div>
+
+  @if (loading) {
+    <div class="status">
+      <span class="spinner"></span>
+      <p>Loading posts for #{{ tag }}...</p>
+    </div>
+  } @else if (error) {
+    <div class="card empty-state">
+      <p>{{ error }}</p>
+    </div>
+  } @else if (posts.length === 0) {
+    <div class="card empty-state">
+      <h3>No posts found</h3>
+      <p>There are no posts using #{{ tag }} yet.</p>
+    </div>
+  } @else {
+    <div class="posts-list">
+      @for (post of posts; track post.postId) {
+        <app-post-card [post]="post"></app-post-card>
+      }
+    </div>
+  }
+</div>
